@@ -26,7 +26,7 @@ var current_mino; // 現在移動中のテトリミノ
 
 current_mino = newMino();
 render();
-setInterval(tick, 500);
+doingGame = setInterval(tick, 500);
 
 function render() {
   ctx.clearRect(0, 0, FIELD_W, FIELD_H);
@@ -36,8 +36,8 @@ function render() {
       drawBlock(x, y, field[y][x]);
     }
   }
-  for (var y = 0; y < 4; y++) {
-    for (var x = 0; x < 4; x++) {
+  for (var y = 0; y < current_mino.length; y++) {
+    for (var x = 0; x < current_mino[y].length; x++) {
       drawBlock(current_x + x, current_y + y, current_mino[y][x]);
     }
   }
@@ -47,8 +47,8 @@ function canMove(move_x, move_y, move_mino) {
   var next_x = current_x + move_x; // 次に動こうとするx座標
   var next_y = current_y + move_y; // 次に動こうとするy座標
   var next_mino = move_mino || current_mino;
-  for (var y = 0; y < 4; y++) {
-    for (var x = 0; x < 4; x++) {
+  for (var y = 0; y < next_mino.length; y++) {
+    for (var x = 0; x < next_mino[y].length; x++) {
       if (next_mino[y][x]) {
         if (
           next_y + y >= ROWS ||
@@ -73,21 +73,30 @@ function drawBlock(x, y, block) {
 }
 
 function tick() {
+  var goflag = true;
   if (canMove(0, 1)) {
     current_y++; // 下に移動させてから
   } else {
     fix();
     current_mino = newMino();
     clearRows();
+    goflag = gameOver();
     current_x = 3;
     current_y = 0;
   }
-  render(); // 再描写
+  if (goflag) {
+    render(); // 再描写
+  } else {
+    clearInterval(doingGame);
+    ctx.font = '48px serif';
+    ctx.textBaseline = 'hanging';
+    ctx.strokeText('GAME OVER', 0, 300);
+  }
 }
 
 function fix() {
-  for (var y = 0; y < 4; ++y) {
-    for (var x = 0; x < 4; ++x) {
+  for (var y = 0; y < current_mino.length; ++y) {
+    for (var x = 0; x < current_mino[y].length; ++x) {
       if (current_mino[y][x]) {
         field[current_y + y][current_x + x] = current_mino[y][x]; // fieldに代入
       }
@@ -144,4 +153,16 @@ function clearRows() {
       y++; // ずらしたら同じ行（上からずれた行）をもう一度判定する
     }
   }
+}
+
+function gameOver() {
+  if (
+    field[0][3] >= 1 ||
+    field[0][4] >= 1 ||
+    field[0][5] >= 1 ||
+    field[0][6] >= 1
+  ) {
+    return false;
+  }
+  return true;
 }
